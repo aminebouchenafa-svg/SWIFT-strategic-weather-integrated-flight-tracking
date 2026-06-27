@@ -1,26 +1,32 @@
 .flight-map {
   flex: 1;
   position: relative;
-  min-height: 300px;
+  min-height: 400px;
 }
 
 .flight-map .leaflet-container {
-  background: var(--bg-primary);
+  background: #1a1a2e;
 }
 
-.map-overlay {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  padding: 16px 24px;
-  background: rgba(10, 14, 23, 0.85);
+.flight-map .leaflet-control-layers {
+  background: rgba(10, 14, 23, 0.9);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  color: var(--text-muted);
-  font-size: 13px;
-  z-index: 1000;
-  pointer-events: none;
+  color: var(--text-primary);
+  border-radius: 8px;
+}
+
+.flight-map .leaflet-control-layers-toggle {
+  width: 30px;
+  height: 30px;
+}
+
+.flight-map .leaflet-control-layers label {
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+.flight-map .leaflet-control-layers-separator {
+  border-top-color: var(--border);
 }
 
 .metar-popup .leaflet-popup-content-wrapper {

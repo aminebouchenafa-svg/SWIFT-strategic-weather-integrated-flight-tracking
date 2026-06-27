@@ -1,31 +1,8 @@
-export const DEMO_AIRPORTS = {
-  LFPG: { icao: "LFPG", name: "Paris Charles de Gaulle", latitude: 49.0097, longitude: 2.5479, elevation_ft: 392 },
-  LFPO: { icao: "LFPO", name: "Paris Orly", latitude: 48.7233, longitude: 2.3794, elevation_ft: 291 },
-  LFML: { icao: "LFML", name: "Marseille Provence", latitude: 43.4393, longitude: 5.2214, elevation_ft: 74 },
-  LFLL: { icao: "LFLL", name: "Lyon Saint-Exupéry", latitude: 45.7256, longitude: 5.0811, elevation_ft: 821 },
-  LFMN: { icao: "LFMN", name: "Nice Côte d'Azur", latitude: 43.6584, longitude: 7.2159, elevation_ft: 12 },
-  LFBD: { icao: "LFBD", name: "Bordeaux Mérignac", latitude: 44.8283, longitude: -0.7156, elevation_ft: 162 },
-  LFOB: { icao: "LFOB", name: "Beauvais Tillé", latitude: 49.4544, longitude: 2.1128, elevation_ft: 359 },
-  LFPB: { icao: "LFPB", name: "Paris Le Bourget", latitude: 48.9694, longitude: 2.4414, elevation_ft: 218 },
-  LFRN: { icao: "LFRN", name: "Rennes Saint-Jacques", latitude: 48.0694, longitude: -1.7347, elevation_ft: 124 },
-  LFRS: { icao: "LFRS", name: "Nantes Atlantique", latitude: 47.1531, longitude: -1.6108, elevation_ft: 90 },
-  EBBR: { icao: "EBBR", name: "Brussels", latitude: 50.9014, longitude: 4.4844, elevation_ft: 184 },
-  EGLL: { icao: "EGLL", name: "London Heathrow", latitude: 51.4700, longitude: -0.4543, elevation_ft: 83 },
-  EHAM: { icao: "EHAM", name: "Amsterdam Schiphol", latitude: 52.3086, longitude: 4.7639, elevation_ft: -11 },
-  EDDF: { icao: "EDDF", name: "Frankfurt", latitude: 50.0333, longitude: 8.5706, elevation_ft: 364 },
-  LEMD: { icao: "LEMD", name: "Madrid Barajas", latitude: 40.4719, longitude: -3.5626, elevation_ft: 2000 },
-  LEBL: { icao: "LEBL", name: "Barcelona El Prat", latitude: 41.2971, longitude: 2.0785, elevation_ft: 12 },
-  LIRF: { icao: "LIRF", name: "Rome Fiumicino", latitude: 41.8003, longitude: 12.2389, elevation_ft: 14 },
-  LSZH: { icao: "LSZH", name: "Zurich", latitude: 47.4647, longitude: 8.5492, elevation_ft: 1416 },
-  EDDM: { icao: "EDDM", name: "Munich", latitude: 48.3538, longitude: 11.7861, elevation_ft: 1487 },
-  ELLX: { icao: "ELLX", name: "Luxembourg", latitude: 49.6233, longitude: 6.2044, elevation_ft: 1234 },
-  LFBI: { icao: "LFBI", name: "Poitiers Biard", latitude: 46.5877, longitude: 0.3066, elevation_ft: 423 },
-  LFBZ: { icao: "LFBZ", name: "Biarritz", latitude: 43.4683, longitude: -1.5233, elevation_ft: 245 },
-  LFPT: { icao: "LFPT", name: "Pontoise", latitude: 49.0164, longitude: 2.0781, elevation_ft: 325 },
-  LFPC: { icao: "LFPC", name: "Creil", latitude: 49.2536, longitude: 2.5192, elevation_ft: 291 },
-  KJFK: { icao: "KJFK", name: "New York JFK", latitude: 40.6413, longitude: -73.7781, elevation_ft: 13 },
-  KLAX: { icao: "KLAX", name: "Los Angeles", latitude: 33.9425, longitude: -118.4081, elevation_ft: 128 },
-}
+import AIRPORTS_LIST from '../data/airports'
+
+export const DEMO_AIRPORTS = Object.fromEntries(
+  AIRPORTS_LIST.map(a => [a.icao, { icao: a.icao, name: a.name, latitude: a.lat, longitude: a.lon, elevation_ft: a.elev }])
+)
 
 function haversineNm(lat1, lon1, lat2, lon2) {
   const R = 3440.065
