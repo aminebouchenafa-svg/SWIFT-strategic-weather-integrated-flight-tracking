@@ -1,0 +1,58 @@
+.vp-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 100%;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.vertical-profile {
+  display: flex;
+  height: 100%;
+  padding: 8px;
+  gap: 8px;
+}
+
+.vp-chart {
+  flex: 1;
+}
+
+.vp-winds {
+  width: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow-y: auto;
+}
+
+.vp-wind-item {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 4px;
+  padding: 4px 6px;
+  background: var(--bg-card);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  align-items: center;
+}
+
+.vp-wind-alt {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.vp-wind-dir {
+  color: var(--accent-cyan);
+}
+
+.vp-wind-speed {
+  color: var(--text-secondary);
+}
+
+.vp-wind-temp {
+  color: var(--accent-orange);
+  text-align: right;
+}

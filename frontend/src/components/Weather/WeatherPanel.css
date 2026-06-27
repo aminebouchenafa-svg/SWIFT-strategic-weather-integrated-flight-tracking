@@ -1,0 +1,136 @@
+.weather-panel-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 100%;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.weather-panel {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  height: 100%;
+  overflow-x: auto;
+}
+
+.metar-card {
+  min-width: 280px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.metar-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.metar-station {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.metar-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.metar-cat {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+}
+
+.metar-raw {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-secondary);
+  padding: 6px;
+  background: var(--bg-primary);
+  border-radius: 4px;
+  word-break: break-all;
+}
+
+.metar-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.metar-detail {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.metar-detail svg {
+  color: var(--accent-cyan);
+  flex-shrink: 0;
+}
+
+.taf-card {
+  min-width: 300px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.taf-header {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent-yellow);
+}
+
+.taf-raw {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-muted);
+  padding: 6px;
+  background: var(--bg-primary);
+  border-radius: 4px;
+  word-break: break-all;
+}
+
+.taf-forecasts {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.taf-forecast {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  padding: 4px 6px;
+  background: rgba(255,255,255,0.02);
+  border-radius: 4px;
+}
+
+.taf-type {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 50px;
+}
