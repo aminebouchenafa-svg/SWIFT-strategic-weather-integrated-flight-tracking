@@ -1,51 +1,87 @@
 .flight-map {
   flex: 1;
   position: relative;
-  min-height: 400px;
+  width: 100%;
+  height: 100%;
 }
 
 .flight-map .leaflet-container {
-  background: #1a1a2e;
+  background: #0a0e17;
 }
 
-.flight-map .leaflet-control-layers {
-  background: rgba(10, 14, 23, 0.9);
-  border: 1px solid var(--border);
-  color: var(--text-primary);
-  border-radius: 8px;
+/* Weather markers */
+.weather-label {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+  pointer-events: auto;
 }
 
-.flight-map .leaflet-control-layers-toggle {
-  width: 30px;
-  height: 30px;
+.weather-label.large {
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
 }
 
-.flight-map .leaflet-control-layers label {
-  color: var(--text-primary);
-  font-size: 12px;
+.weather-label.small {
+  flex-direction: row;
+  gap: 1px;
 }
 
-.flight-map .leaflet-control-layers-separator {
-  border-top-color: var(--border);
+.weather-icon {
+  font-size: 18px;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,0.8));
+  line-height: 1;
 }
 
+.weather-label.small .weather-icon {
+  font-size: 14px;
+}
+
+.weather-temp {
+  font-family: var(--font-mono), 'Courier New', monospace;
+  font-size: 14px;
+  font-weight: 800;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.7);
+  line-height: 1.1;
+}
+
+.weather-label.small .weather-temp {
+  font-size: 11px;
+}
+
+.weather-name {
+  font-size: 10px;
+  font-weight: 600;
+  color: #e2e8f0;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.8);
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* Popups */
 .metar-popup .leaflet-popup-content-wrapper {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  background: rgba(15, 20, 35, 0.95);
+  color: #e2e8f0;
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  border-radius: 10px;
+  backdrop-filter: blur(10px);
 }
 
 .metar-popup .leaflet-popup-tip {
-  background: var(--bg-secondary);
+  background: rgba(15, 20, 35, 0.95);
 }
 
 .popup-content {
-  font-size: 12px;
+  font-size: 13px;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  min-width: 200px;
+  min-width: 180px;
 }
 
 .popup-header {
@@ -53,12 +89,19 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .popup-header strong {
-  font-family: var(--font-mono);
-  font-size: 14px;
+  font-family: var(--font-mono), monospace;
+  font-size: 16px;
+  color: #06b6d4;
+}
+
+.popup-name {
+  font-weight: 500;
+  color: #94a3b8;
+  font-size: 12px;
 }
 
 .cat-badge {
@@ -66,22 +109,21 @@
   border-radius: 4px;
   font-size: 10px;
   font-weight: 700;
-  font-family: var(--font-mono);
+  font-family: var(--font-mono), monospace;
 }
 
-.cat-vfr { background: rgba(16,185,129,0.2); color: var(--vfr); }
-.cat-mvfr { background: rgba(59,130,246,0.2); color: var(--mvfr); }
-.cat-ifr { background: rgba(239,68,68,0.2); color: var(--ifr); }
-.cat-lifr { background: rgba(168,85,247,0.2); color: var(--lifr); }
-.cat-unknown { background: rgba(107,114,128,0.2); color: var(--text-muted); }
+.cat-vfr { background: rgba(16,185,129,0.2); color: #10b981; }
+.cat-mvfr { background: rgba(59,130,246,0.2); color: #3b82f6; }
+.cat-ifr { background: rgba(239,68,68,0.2); color: #ef4444; }
+.cat-lifr { background: rgba(168,85,247,0.2); color: #a855f7; }
 
 .popup-raw {
   margin-top: 6px;
   padding: 6px;
-  background: var(--bg-primary);
+  background: rgba(0,0,0,0.3);
   border-radius: 4px;
-  font-family: var(--font-mono);
+  font-family: var(--font-mono), monospace;
   font-size: 10px;
-  color: var(--text-secondary);
+  color: #94a3b8;
   word-break: break-all;
 }
