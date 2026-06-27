@@ -175,7 +175,7 @@ function AirportPanel({ airport, metarData, onClose }) {
   useEffect(() => {
     setLoadingTaf(true)
     setTaf(null)
-    fetch(`https://aviationweather.gov/api/data/taf?ids=${airport.icao}&format=json`)
+    fetch(proxyUrl(`https://aviationweather.gov/api/data/taf?ids=${airport.icao}&format=json`))
       .then(r => r.json())
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
@@ -274,6 +274,10 @@ function fmtTime(d) {
   return `${jours[dt.getDay()]} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`
 }
 
+function proxyUrl(url) {
+  return `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
+}
+
 async function fetchMetars() {
   const batchSize = 60
   const results = {}
@@ -281,7 +285,7 @@ async function fetchMetars() {
     const batch = AIRPORTS.slice(i, i + batchSize)
     const ids = batch.map(a => a.icao).join(',')
     try {
-      const r = await fetch(`https://aviationweather.gov/api/data/metar?ids=${ids}&format=json`)
+      const r = await fetch(proxyUrl(`https://aviationweather.gov/api/data/metar?ids=${ids}&format=json`))
       const data = await r.json()
       if (Array.isArray(data)) {
         data.forEach(m => {
