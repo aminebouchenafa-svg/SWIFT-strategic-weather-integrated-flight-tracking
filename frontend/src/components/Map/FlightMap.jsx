@@ -87,7 +87,7 @@ function SatelliteOverlay({ frames, frameIdx }) {
     frames.forEach(f => {
       if (!layers[f.path]) {
         layers[f.path] = L.tileLayer(
-          `https://tilecache.rainviewer.com${f.path}/256/{z}/{x}/{y}/0/0_0.png`,
+          `https://tilecache.rainviewer.com${f.path}/256/{z}/{x}/{y}/2/1_0.png`,
           { opacity: 0, zIndex: 250 }
         )
         layers[f.path].addTo(map)
@@ -107,7 +107,7 @@ function SatelliteOverlay({ frames, frameIdx }) {
     const idx = Math.min(frameIdx, frames.length - 1)
     const f = frames[idx]
     if (f && layers[f.path]) {
-      layers[f.path].setOpacity(0.55)
+      layers[f.path].setOpacity(0.7)
       activeRef.current = f.path
     }
   }, [frameIdx, frames])
