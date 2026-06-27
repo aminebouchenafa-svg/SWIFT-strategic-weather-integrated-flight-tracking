@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState, useRef } from 'react'
-import { MapContainer, TileLayer, CircleMarker, Popup, useMap } from 'react-leaflet'
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react'
+import { MapContainer, TileLayer, CircleMarker, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import AIRPORTS from '../../data/airports'
 import './FlightMap.css'
@@ -111,7 +111,7 @@ function SatelliteOverlay({ frames, frameIdx }) {
   return null
 }
 
-function AirportMarkers({ metarData, forecastData, hourIndex, mode }) {
+function AirportMarkers({ metarData, forecastData, hourIndex, mode, onSelect }) {
   const map = useMap()
   const [zoom, setZoom] = useState(map.getZoom())
 
@@ -133,19 +133,13 @@ function AirportMarkers({ metarData, forecastData, hourIndex, mode }) {
     const metar = metarData[ap.icao]
     const fc = forecastData[ap.icao]
 
-    let cat, temp, visLabel, windLabel, rawOb
+    let cat
     if (mode === 'radar' && metar) {
       cat = (metar.fltCat || 'vfr').toLowerCase()
       if (cat === 'lifr') cat = 'lvo'
-      temp = metar.temp
-      visLabel = metar.visib === '6+' ? '> 10 km' : `${(metar.visib * 1.60934).toFixed(1)} km`
-      windLabel = metar.wdir && metar.wspd ? `${metar.wdir}°/${metar.wspd} kt` : null
-      rawOb = metar.rawOb
     } else if (fc) {
       const vis = fc.visibility?.[hourIndex]
       cat = getFlightCatFromVis(vis)
-      temp = fc.temps?.[hourIndex]
-      visLabel = vis !== undefined ? `${(vis / 1000).toFixed(1)} km` : null
     } else {
       return null
     }
@@ -164,24 +158,114 @@ function AirportMarkers({ metarData, forecastData, hourIndex, mode }) {
           weight: 1.5,
           opacity: 0.8,
         }}
-      >
-        <Popup className="metar-popup">
-          <div className="popup-content">
-            <div className="popup-header">
-              <strong>{ap.icao}</strong>
-              <span className={`cat-badge cat-${cat}`}>{CAT_LABELS[cat] || 'VFR'}</span>
-            </div>
-            <div className="popup-name">{ap.name}</div>
-            {temp !== undefined && <div className="popup-row">🌡️ {Math.round(temp)}°C</div>}
-            {visLabel && <div className="popup-row">👁️ {visLabel}</div>}
-            {windLabel && <div className="popup-row">💨 {windLabel}</div>}
-            <div className="popup-row">📍 {ap.elev} ft</div>
-            {rawOb && <div className="popup-raw">{rawOb}</div>}
-          </div>
-        </Popup>
-      </CircleMarker>
+        eventHandlers={{ click: () => onSelect(ap) }}
+      />
     )
   })
+}
+
+function AirportPanel({ airport, metarData, onClose }) {
+  const [taf, setTaf] = useState(null)
+  const [loadingTaf, setLoadingTaf] = useState(true)
+
+  const metar = metarData[airport.icao]
+  const cat = metar ? (metar.fltCat || 'VFR').toUpperCase() : null
+  const catClass = cat ? cat.toLowerCase() : 'vfr'
+
+  useEffect(() => {
+    setLoadingTaf(true)
+    setTaf(null)
+    fetch(`https://aviationweather.gov/api/data/taf?ids=${airport.icao}&format=json`)
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setTaf(data[0])
+        }
+        setLoadingTaf(false)
+      })
+      .catch(() => setLoadingTaf(false))
+  }, [airport.icao])
+
+  const fmtAge = (obsTime) => {
+    if (!obsTime) return ''
+    const mins = Math.round((Date.now() / 1000 - obsTime) / 60)
+    if (mins < 60) return `${mins} min`
+    return `${Math.floor(mins / 60)}h${mins % 60 ? String(mins % 60).padStart(2, '0') : ''}`
+  }
+
+  return (
+    <div className="airport-panel">
+      <div className="panel-header">
+        <div className="panel-title">
+          <strong>{airport.icao}</strong>
+          {cat && <span className={`cat-badge cat-${catClass === 'lifr' ? 'lvo' : catClass}`}>{cat === 'LIFR' ? 'LVO' : cat}</span>}
+        </div>
+        <button className="panel-close" onClick={onClose}>✕</button>
+      </div>
+
+      <div className="panel-airport-name">{airport.name}</div>
+      <div className="panel-airport-info">
+        📍 {airport.elev} ft &nbsp;|&nbsp; {airport.lat.toFixed(3)}° {airport.lon.toFixed(3)}°
+      </div>
+
+      <div className="panel-section">
+        <div className="panel-section-header">
+          <span className="panel-section-title">METAR</span>
+          {metar && <span className="panel-age">{fmtAge(metar.obsTime)}</span>}
+        </div>
+        {metar ? (
+          <>
+            <div className="panel-raw">{metar.rawOb}</div>
+            <div className="panel-decoded">
+              <div className="decoded-row">
+                <span className="decoded-label">Vent</span>
+                <span>{metar.wdir === 'VRB' ? 'Variable' : `${metar.wdir}°`} / {metar.wspd} kt{metar.wgst ? ` G${metar.wgst}` : ''}</span>
+              </div>
+              <div className="decoded-row">
+                <span className="decoded-label">Visibilité</span>
+                <span>{metar.visib === '6+' ? '> 10 km (CAVOK)' : `${(metar.visib * 1.60934).toFixed(1)} km`}</span>
+              </div>
+              <div className="decoded-row">
+                <span className="decoded-label">Température</span>
+                <span>{metar.temp}°C / Td {metar.dewp}°C</span>
+              </div>
+              <div className="decoded-row">
+                <span className="decoded-label">QNH</span>
+                <span>{metar.altim} hPa</span>
+              </div>
+              {metar.clouds && metar.clouds.length > 0 && (
+                <div className="decoded-row">
+                  <span className="decoded-label">Nuages</span>
+                  <span>{metar.clouds.map(c => `${c.cover} ${c.base}ft`).join(', ')}</span>
+                </div>
+              )}
+              {metar.wxString && (
+                <div className="decoded-row">
+                  <span className="decoded-label">Phénomènes</span>
+                  <span>{metar.wxString}</span>
+                </div>
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="panel-no-data">Pas de METAR disponible</div>
+        )}
+      </div>
+
+      <div className="panel-section">
+        <div className="panel-section-header">
+          <span className="panel-section-title">TAF</span>
+        </div>
+        {loadingTaf ? (
+          <div className="panel-loading">Chargement TAF...</div>
+        ) : taf ? (
+          <div className="panel-raw">{taf.rawTAF}</div>
+        ) : (
+          <div className="panel-no-data">Pas de TAF disponible</div>
+        )}
+      </div>
+    </div>
+  )
 }
 
 function fmtTime(d) {
@@ -219,6 +303,7 @@ export default function FlightMap() {
   const [playing, setPlaying] = useState(false)
   const [loading, setLoading] = useState(true)
   const [mode, setMode] = useState('radar')
+  const [selectedAirport, setSelectedAirport] = useState(null)
   const playRef = useRef(null)
 
   const totalRadar = radarFrames.length
@@ -319,6 +404,10 @@ export default function FlightMap() {
     : forecastHour < 24 ? `📊 PRÉVISIONS +${forecastHour}H`
     : `📊 J+${Math.floor(forecastHour / 24)}`
 
+  const handleSelect = useCallback((ap) => {
+    setSelectedAirport(ap)
+  }, [])
+
   return (
     <div className="flight-map">
       <MapContainer center={[36, 10]} zoom={5} style={{width:'100%',height:'100%'}} zoomControl={true}>
@@ -340,6 +429,7 @@ export default function FlightMap() {
           forecastData={forecastData}
           hourIndex={forecastHour}
           mode={mode}
+          onSelect={handleSelect}
         />
       </MapContainer>
 
@@ -369,6 +459,14 @@ export default function FlightMap() {
           <button className="cb" onClick={() => { setFrameIdx(i => Math.min(total - 1, i + 1)); setPlaying(false) }}>⏭</button>
         </div>
       </div>
+
+      {selectedAirport && (
+        <AirportPanel
+          airport={selectedAirport}
+          metarData={metarData}
+          onClose={() => setSelectedAirport(null)}
+        />
+      )}
 
       {loading && <div className="loader"><div className="spin" /><span>Chargement METARs...</span></div>}
     </div>
