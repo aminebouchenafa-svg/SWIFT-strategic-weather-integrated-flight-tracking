@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from 'react'
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, useMap, CircleMarker } from 'react-leaflet'
 import L from 'leaflet'
 import AIRPORTS from '../../data/airports'
 import './FlightMap.css'
@@ -16,19 +16,26 @@ function getWeatherIcon(code, isDay) {
   return WMO_ICONS[code] || '☁️'
 }
 
-function createWeatherIcon(temp, weatherCode, isDay, name, showName) {
-  const tempColor = temp <= 0 ? '#93c5fd' : temp <= 10 ? '#67e8f9' : temp <= 20 ? '#fde047' : temp <= 30 ? '#fb923c' : '#ef4444'
-  const icon = getWeatherIcon(weatherCode, isDay)
-  return L.divIcon({
-    className: 'weather-marker',
-    html: `<div class="weather-label">
-      <span class="wi">${icon}</span>
-      <span class="wt" style="color:${tempColor}">${Math.round(temp)}°</span>
-      ${showName ? `<span class="wn">${name}</span>` : ''}
-    </div>`,
-    iconSize: [0, 0],
-    iconAnchor: [0, 12],
-  })
+function getFlightCategory(visibility) {
+  if (visibility === undefined || visibility === null) return 'vfr'
+  if (visibility >= 8000) return 'vfr'
+  if (visibility >= 5000) return 'mvfr'
+  if (visibility >= 1600) return 'ifr'
+  return 'lvo'
+}
+
+const CAT_COLORS = {
+  vfr: '#22c55e',
+  mvfr: '#3b82f6',
+  ifr: '#ef4444',
+  lvo: '#a855f7',
+}
+
+const CAT_LABELS = {
+  vfr: 'VFR',
+  mvfr: 'MVFR',
+  ifr: 'IFR',
+  lvo: 'LVO',
 }
 
 const MAJOR = new Set([
@@ -39,7 +46,6 @@ const MAJOR = new Set([
   'OERK','OLBA','OJAI','LLBG','DAAT','DAFH',
 ])
 
-// Preloads and swaps RainViewer tile layers for smooth animation
 function RadarOverlay({ frames, frameIdx }) {
   const map = useMap()
   const layersRef = useRef({})
@@ -115,7 +121,7 @@ function SatelliteOverlay({ frames, frameIdx }) {
   return null
 }
 
-function WeatherMarkers({ hourlyData, hourIndex }) {
+function AirportMarkers({ hourlyData, hourIndex }) {
   const map = useMap()
   const [zoom, setZoom] = useState(map.getZoom())
 
@@ -126,28 +132,50 @@ function WeatherMarkers({ hourlyData, hourIndex }) {
   }, [map])
 
   const visible = useMemo(() => {
-    if (zoom >= 8) return AIRPORTS
-    if (zoom >= 6) return AIRPORTS.filter(a => MAJOR.has(a.icao))
+    if (zoom >= 7) return AIRPORTS
+    if (zoom >= 5) return AIRPORTS.filter(a => MAJOR.has(a.icao))
     return AIRPORTS.filter(a => MAJOR.has(a.icao)).filter((_, i) => i % 2 === 0)
   }, [zoom])
+
+  const radius = zoom >= 8 ? 7 : zoom >= 6 ? 6 : 5
 
   return visible.map(ap => {
     const d = hourlyData[ap.icao]
     if (!d) return null
-    const temp = d.temps[hourIndex]
-    if (temp === undefined) return null
+    const vis = d.visibility?.[hourIndex]
+    const temp = d.temps?.[hourIndex]
+    const code = d.codes?.[hourIndex]
+    const isDay = d.isDay?.[hourIndex]
+    const cat = getFlightCategory(vis)
+    const color = CAT_COLORS[cat]
+    const icon = getWeatherIcon(code, isDay)
+
     return (
-      <Marker key={ap.icao} position={[ap.lat, ap.lon]}
-        icon={createWeatherIcon(temp, d.codes[hourIndex], d.isDay[hourIndex], ap.name, zoom >= 6)}>
+      <CircleMarker
+        key={ap.icao}
+        center={[ap.lat, ap.lon]}
+        radius={radius}
+        pathOptions={{
+          fillColor: color,
+          fillOpacity: 0.9,
+          color: '#fff',
+          weight: 1.5,
+          opacity: 0.8,
+        }}
+      >
         <Popup className="metar-popup">
           <div className="popup-content">
-            <strong style={{color:'#06b6d4',fontSize:15}}>{ap.icao}</strong>
-            <div style={{color:'#94a3b8',fontSize:12}}>{ap.name}</div>
-            <div>🌡️ {temp}°C</div>
-            <div>📍 {ap.elev} ft</div>
+            <div className="popup-header">
+              <strong>{ap.icao}</strong>
+              <span className={`cat-badge cat-${cat}`}>{CAT_LABELS[cat]}</span>
+            </div>
+            <div className="popup-name">{ap.name}</div>
+            <div className="popup-row">{icon} {temp !== undefined ? `${Math.round(temp)}°C` : '--'}</div>
+            <div className="popup-row">👁️ {vis !== undefined ? `${(vis / 1000).toFixed(1)} km` : '--'}</div>
+            <div className="popup-row">📍 {ap.elev} ft</div>
           </div>
         </Popup>
-      </Marker>
+      </CircleMarker>
     )
   })
 }
@@ -186,7 +214,7 @@ export default function FlightMap() {
   useEffect(() => {
     const lats = AIRPORTS.map(a => a.lat).join(',')
     const lons = AIRPORTS.map(a => a.lon).join(',')
-    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&hourly=temperature_2m,weather_code,is_day&forecast_days=3&timezone=auto`)
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lons}&hourly=temperature_2m,weather_code,is_day,visibility&forecast_days=3&timezone=auto`)
       .then(r => r.json())
       .then(data => {
         const res = {}; let t = []
@@ -198,6 +226,7 @@ export default function FlightMap() {
                 temps: d.hourly.temperature_2m,
                 codes: d.hourly.weather_code,
                 isDay: d.hourly.is_day.map(v => v === 1),
+                visibility: d.hourly.visibility,
               }
             }
           })
@@ -207,7 +236,6 @@ export default function FlightMap() {
       .catch(() => setLoading(false))
   }, [])
 
-  // Set initial frame
   useEffect(() => {
     if (mode === 'radar' && totalRadar > 0) setFrameIdx(totalRadar - 1)
   }, [totalRadar, mode])
@@ -220,7 +248,6 @@ export default function FlightMap() {
     }
   }, [hourlyTimes, mode])
 
-  // Animation
   useEffect(() => {
     if (!playing || total <= 0) return
     const speed = mode === 'radar' ? 500 : 700
@@ -240,7 +267,6 @@ export default function FlightMap() {
     setPlaying(false); setMode(m)
   }
 
-  // Current forecast hour for markers
   const forecastHour = useMemo(() => {
     if (mode === 'forecast') return frameIdx
     if (!hourlyTimes.length) return 0
@@ -265,7 +291,17 @@ export default function FlightMap() {
   return (
     <div className="flight-map">
       <MapContainer center={[36, 10]} zoom={5} style={{width:'100%',height:'100%'}} zoomControl={true}>
-        <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" maxZoom={18} />
+        <TileLayer
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}"
+          maxZoom={8}
+          attribution="Esri"
+        />
+        <TileLayer
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
+          minZoom={9}
+          maxZoom={18}
+          attribution="Esri"
+        />
         <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png" zIndex={400} />
 
         {mode === 'radar' && satFrames.length > 0 && (
@@ -275,16 +311,21 @@ export default function FlightMap() {
           <RadarOverlay frames={radarFrames} frameIdx={frameIdx} />
         )}
 
-        <WeatherMarkers hourlyData={hourlyData} hourIndex={forecastHour} />
+        <AirportMarkers hourlyData={hourlyData} hourIndex={forecastHour} />
       </MapContainer>
 
-      {/* Mode tabs */}
+      <div className="legend">
+        <span className="legend-dot" style={{background:'#22c55e'}}></span> VFR
+        <span className="legend-dot" style={{background:'#3b82f6'}}></span> MVFR
+        <span className="legend-dot" style={{background:'#ef4444'}}></span> IFR
+        <span className="legend-dot" style={{background:'#a855f7'}}></span> LVO
+      </div>
+
       <div className="mode-tabs">
         <button className={mode === 'radar' ? 'on' : ''} onClick={() => switchMode('radar')}>📡 Radar</button>
         <button className={mode === 'forecast' ? 'on' : ''} onClick={() => switchMode('forecast')}>📊 3 Jours</button>
       </div>
 
-      {/* Player */}
       <div className="player">
         <div className="player-top">
           <span className="badge">{badge}</span>
