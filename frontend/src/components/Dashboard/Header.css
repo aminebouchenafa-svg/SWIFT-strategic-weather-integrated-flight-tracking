@@ -59,6 +59,10 @@
   50% { opacity: 0.3; }
 }
 
+.status-indicator.demo {
+  color: var(--accent-orange);
+}
+
 .header-time {
   font-family: var(--font-mono);
   font-size: 12px;
